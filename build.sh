@@ -52,14 +52,14 @@ touch "$SAVE_DIR/.gitkeep"
 
 # 5. Write startup script
 echo "[5/6] Writing startup script..."
-cat > "$GAME_DIR/start.sh" << 'STARTSCRIPT'
+cat > "$GAME_DIR/start.sh" << STARTSCRIPT
 #!/usr/bin/env bash
-GAME_DIR="$(cd "$(dirname "$0")" && pwd)"
+GAME_DIR="$GAME_DIR"
 echo "Starting Star Trek: Infinite Horizons on port 4242..."
-exec "$GAME_DIR/bin/ldmud" \
-    --master "$GAME_DIR/lib/secure/master" \
-    --mudlib "$GAME_DIR/lib" \
-    --debug-file "$GAME_DIR/lib/log/debug.log" \
+exec "\$GAME_DIR/bin/ldmud" \
+    --mudlib "\$GAME_DIR/lib" \
+    --master "/secure/master" \
+    --debug-file "\$GAME_DIR/lib/log/debug.log" \
     --hard-malloc-limit 0 \
     4242
 STARTSCRIPT
