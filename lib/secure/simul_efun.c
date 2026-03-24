@@ -12,13 +12,13 @@ void create() {
 
 // Capitalize first letter
 string cap_str(string s) {
-    if (!s || !strlen(s)) return s;
+    if (!s || !sizeof(s)) return s;
     return upper_case(s[0..0]) + s[1..];
 }
 
 // Add article (a/an) before a string
 string add_article(string s) {
-    if (!s || !strlen(s)) return s;
+    if (!s || !sizeof(s)) return s;
     string first = lower_case(s[0..0]);
     if (first == "a" || first == "e" || first == "i" ||
         first == "o" || first == "u")
@@ -28,14 +28,14 @@ string add_article(string s) {
 
 // Wrap long strings at column width
 string wrap_string(string s, int width) {
-    if (!s || !strlen(s)) return s;
+    if (!s || !sizeof(s)) return s;
     string result = "";
     string *words = explode(s, " ");
     int col = 0;
     int i;
     for (i = 0; i < sizeof(words); i++) {
         string word = words[i];
-        int wlen = strlen(word);
+        int wlen = sizeof(word);
         if (col + wlen + 1 > width && col > 0) {
             result += "\n";
             col = 0;
@@ -58,7 +58,7 @@ string repeat_string(string s, int n) {
 
 // Center a string in a given width
 string center_string(string s, int width) {
-    int len = strlen(s);
+    int len = sizeof(s);
     if (len >= width) return s;
     int pad = (width - len) / 2;
     return repeat_string(" ", pad) + s + repeat_string(" ", width - len - pad);

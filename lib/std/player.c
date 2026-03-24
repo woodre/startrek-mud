@@ -196,9 +196,9 @@ void setup_after_login() {
     do_look();
     // Show MOTD
     write("\n");
-    cat(MOTD_FILE);
+    string motd = read_file(MOTD_FILE);
+    if (motd) write(motd);
     write("\n");
-    log_player(query_name());
 }
 
 void do_look() {
@@ -445,7 +445,7 @@ int do_move(string dir) {
 }
 
 int cmd_say(string arg) {
-    if (!arg || !strlen(arg)) { write("Say what?\n"); return 1; }
+    if (!arg || !sizeof(arg)) { write("Say what?\n"); return 1; }
     tell_object(this_object(), C_WHITE + "You say: " + C_RESET + "'" + arg + "'\n");
     if (environment(this_object()))
         tell_room(environment(this_object()),

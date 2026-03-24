@@ -16,7 +16,8 @@ string class_choice;
 void logon() {
     write("\n");
     write(C_CYAN + repeat_string("=", 70) + C_RESET + "\n");
-    cat(WELCOME_FILE);
+    string welcome = read_file(WELCOME_FILE);
+    if (welcome) write(welcome);
     write(C_CYAN + repeat_string("=", 70) + C_RESET + "\n\n");
     write(C_YELLOW + "By what name do you wish to be known? " + C_RESET);
     input_to("get_name");
@@ -24,7 +25,7 @@ void logon() {
 
 // Receive the player's name
 void get_name(string str) {
-    if (!str || !strlen(str)) {
+    if (!str || !sizeof(str)) {
         write(C_RED + "Please enter a name.\n" + C_RESET);
         write("By what name do you wish to be known? ");
         input_to("get_name");
@@ -32,14 +33,14 @@ void get_name(string str) {
     }
     str = lower_case(str);
     // Validate name: letters only, 3-12 chars
-    if (strlen(str) < 3 || strlen(str) > 12) {
+    if (sizeof(str) < 3 || sizeof(str) > 12) {
         write(C_RED + "Name must be between 3 and 12 characters.\n" + C_RESET);
         write("By what name do you wish to be known? ");
         input_to("get_name");
         return;
     }
     int i;
-    for (i = 0; i < strlen(str); i++) {
+    for (i = 0; i < sizeof(str); i++) {
         int c = str[i];
         if (!((c >= 'a' && c <= 'z'))) {
             write(C_RED + "Name must contain only letters.\n" + C_RESET);
@@ -65,7 +66,7 @@ void get_name(string str) {
 
 // Existing player - verify password
 void get_password(string pass) {
-    if (!pass || !strlen(pass)) {
+    if (!pass || !sizeof(pass)) {
         write("Password: ");
         input_to("get_password", 1);
         return;
@@ -87,7 +88,7 @@ void get_password(string pass) {
 
 // New player - set password
 void get_new_password(string pass) {
-    if (!pass || strlen(pass) < 5) {
+    if (!pass || sizeof(pass) < 5) {
         write(C_RED + "Password must be at least 5 characters.\n" + C_RESET);
         write("Choose a password: ");
         input_to("get_new_password", 1);

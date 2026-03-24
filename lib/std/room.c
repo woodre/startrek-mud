@@ -77,7 +77,7 @@ void look(object viewer) {
             things += "  " + ob->query_short() + " is here.\n";
         ob = next_inventory(ob);
     }
-    if (strlen(things))
+    if (sizeof(things))
         tell_object(viewer, things);
 }
 
