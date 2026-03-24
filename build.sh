@@ -32,10 +32,9 @@ fi
 echo "[3/6] Building LDMud driver..."
 mkdir -p "$BIN_DIR"
 # autogen.sh must run before configure - it generates the configure script
-cd "$LDMUD_SRC"
+cd "$LDMUD_SRC/src"
 echo "    Running autogen.sh..."
 ./autogen.sh
-cd src
 ./configure --prefix="$GAME_DIR" \
     --enable-use-pcre \
     --enable-use-tls=no \
