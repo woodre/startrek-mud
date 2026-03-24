@@ -1,0 +1,15 @@
+# LDMud runtime files
+lib/secure/players/
+lib/log/
+lib/tmp/
+*.o
+*.swp
+
+# Build artifacts
+bin/
+ldmud_src/
+start.sh
+
+# OS
+.DS_Store
+Thumbs.db
