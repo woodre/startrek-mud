@@ -3,13 +3,18 @@
  * LDMud 3.6.x compatible - uses only standard efuns
  */
 
+// Must return the uid used as the master/root uid
+string get_master_uid() {
+    return "MUDLIB";
+}
+
 // Called when driver first loads
 void create() {
 }
 
-// Return the simul_efun object path
-string get_simul_efun() {
-    return "/secure/simul_efun";
+// Must load and return the simul_efun object
+object get_simul_efun() {
+    return load_object("/secure/simul_efun");
 }
 
 // Called for each new incoming connection - return login object
