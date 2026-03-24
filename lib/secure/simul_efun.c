@@ -1,12 +1,9 @@
 /* /secure/simul_efun.c
- * Simulated efuns - functions available globally to all objects
- * Star Trek: Infinite Horizons
+ * Simulated efuns - globally available to all objects
+ * LDMud 3.6.x compatible
  */
 
-#include "/include/mudlib.h"
-
 void create() {
-    seteuid("root");
 }
 
 /* ============================================================
@@ -31,10 +28,13 @@ string add_article(string s) {
 
 // Wrap long strings at column width
 string wrap_string(string s, int width) {
+    if (!s || !strlen(s)) return s;
     string result = "";
     string *words = explode(s, " ");
     int col = 0;
-    foreach (string word : words) {
+    int i;
+    for (i = 0; i < sizeof(words); i++) {
+        string word = words[i];
         int wlen = strlen(word);
         if (col + wlen + 1 > width && col > 0) {
             result += "\n";
@@ -64,19 +64,16 @@ string center_string(string s, int width) {
     return repeat_string(" ", pad) + s + repeat_string(" ", width - len - pad);
 }
 
+// strsrch compatibility: find needle in haystack, return pos or -1
+// LDMud 3.6 uses strstr() as an efun; this sfun wraps it for our code
+int strsrch(string haystack, string needle) {
+    if (!haystack || !needle) return -1;
+    return strstr(haystack, needle, 0);
+}
+
 /* ============================================================
  * NUMBER UTILITIES
  * ============================================================ */
-
-// Integer to ordinal string (1st, 2nd, 3rd...)
-string ordinal(int n) {
-    switch(n % 10) {
-        case 1: return (n % 100 == 11) ? n + "th" : n + "st";
-        case 2: return (n % 100 == 12) ? n + "th" : n + "nd";
-        case 3: return (n % 100 == 13) ? n + "th" : n + "rd";
-        default: return n + "th";
-    }
-}
 
 // Clamp value between min and max
 int clamp(int val, int min_val, int max_val) {
@@ -95,34 +92,38 @@ int percent(int part, int total) {
  * PLAYER UTILITIES
  * ============================================================ */
 
-// Find a player by name (partial match)
+// Find a player by name (prefix match)
 object find_player(string name) {
     object *obs = users();
-    foreach (object ob : obs) {
-        if (IS_PLAYER(ob) && strsrch(lower_case(ob->query_name()), lower_case(name)) == 0)
+    int i;
+    string lname = lower_case(name);
+    for (i = 0; i < sizeof(obs); i++) {
+        object ob = obs[i];
+        if (ob->is_player() &&
+            strstr(lower_case(ob->query_name()), lname, 0) == 0)
             return ob;
     }
     return 0;
 }
 
-// Find living object in a room by name
+// Find a living object in a room by id string
 object find_living_in_room(string name, object room) {
-    object ob;
-    ob = first_inventory(room);
+    if (!room) return 0;
+    object ob = first_inventory(room);
     while (ob) {
-        if (living(ob) && id(ob, name))
+        if (living(ob) && ob->id(name))
             return ob;
         ob = next_inventory(ob);
     }
     return 0;
 }
 
-// Tell all players in a room
+// Tell all players in a room, optionally excluding some
 void tell_room(object room, string msg, object *exclude) {
-    object ob;
-    ob = first_inventory(room);
+    if (!room) return;
+    object ob = first_inventory(room);
     while (ob) {
-        if (interactive(ob) && !member(exclude, ob))
+        if (interactive(ob) && member(exclude, ob) == -1)
             tell_object(ob, msg);
         ob = next_inventory(ob);
     }
@@ -132,57 +133,56 @@ void tell_room(object room, string msg, object *exclude) {
  * COMBAT / STAT UTILITIES
  * ============================================================ */
 
-// Calculate XP needed for a given level
+// XP required to reach a level
 int xp_for_level(int level) {
-    return to_int(XP_BASE * pow(XP_MULTIPLIER, level - 1));
+    // Simple exponential: 100 * 1.5^(level-1)
+    int xp = 100;
+    int i;
+    for (i = 1; i < level; i++)
+        xp = (xp * 3) / 2;
+    return xp;
 }
 
-// Generate a random number between min and max (inclusive)
+// Random number between min and max inclusive
 int rng(int min_val, int max_val) {
     if (min_val >= max_val) return min_val;
     return min_val + random(max_val - min_val + 1);
 }
 
-// Color-code a number as a health bar segment
+// ANSI health bar string
 string health_bar(int current, int maximum, int width) {
     if (maximum <= 0) return repeat_string("-", width);
     int filled = (current * width) / maximum;
-    filled = clamp(filled, 0, width);
+    if (filled < 0) filled = 0;
+    if (filled > width) filled = width;
     int pct = percent(current, maximum);
     string color;
-    if (pct >= 75) color = C_GREEN;
-    else if (pct >= 40) color = C_YELLOW;
-    else color = C_RED;
-    return color + repeat_string("=", filled) + C_GREY +
-           repeat_string("-", width - filled) + C_RESET;
+    if (pct >= 75)      color = "\033[32m";   // green
+    else if (pct >= 40) color = "\033[33m";   // yellow
+    else                color = "\033[31m";   // red
+    return color + repeat_string("=", filled) +
+           "\033[90m" + repeat_string("-", width - filled) + "\033[0m";
 }
 
 // Quality-colored item name
 string quality_name(int quality, string name) {
-    return QUALITY_COLOR(quality) + name + C_RESET;
+    string color;
+    switch(quality) {
+        case 0:  color = "\033[90m"; break;   // grey  - poor
+        case 1:  color = "\033[37m"; break;   // white - common
+        case 2:  color = "\033[32m"; break;   // green - uncommon
+        case 3:  color = "\033[36m"; break;   // cyan  - rare
+        case 4:  color = "\033[35m"; break;   // magenta - epic
+        default: color = "\033[38;5;214m";    // orange - legendary
+    }
+    return color + name + "\033[0m";
 }
 
 /* ============================================================
  * MESSAGE FORMATTING
  * ============================================================ */
 
-// Notify all interactive users in a room except the actor
 void notify_room(string msg, object actor) {
     if (!environment(actor)) return;
     tell_room(environment(actor), msg, ({ actor }));
-}
-
-// Send a formatted combat message to player
-void combat_msg(object player, string msg) {
-    tell_object(player, C_LRED + "[Combat] " + C_RESET + msg + "\n");
-}
-
-// Send a formatted system message
-void sys_msg(object player, string msg) {
-    tell_object(player, C_CYAN + "[System] " + C_RESET + msg + "\n");
-}
-
-// Send a formatted info message
-void info_msg(object player, string msg) {
-    tell_object(player, C_YELLOW + msg + C_RESET + "\n");
 }

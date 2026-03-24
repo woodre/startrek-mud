@@ -29,7 +29,7 @@ void create() {
     total_kills = 0;
     total_deaths = 0;
     known_commands = ([ ]);
-    set_living_name(query_name());
+    // set_living_name is called automatically when name is set in native mode
     call_out("regen_tick", 6);
 }
 
@@ -39,7 +39,6 @@ int is_player() { return 1; }
 // PERSISTENCE
 // ============================================================
 void save_player() {
-    seteuid(lower_case(query_name()));
     save_object(PLAYER_SAVE_DIR + lower_case(query_name()));
 }
 

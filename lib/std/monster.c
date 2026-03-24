@@ -139,7 +139,9 @@ void handle_death(object killer) {
     // Create corpse
     object corpse = clone_object("/obj/corpse");
     corpse->setup(query_name(), credits_value);
-    corpse->move(environment(this_object()) || caller_stack()[0]);
+    object corpse_env = environment(this_object());
+    if (!corpse_env) corpse_env = environment(killer);
+    if (corpse_env) corpse->move(corpse_env);
 
     // Respawn after delay
     call_out("respawn", 60);
