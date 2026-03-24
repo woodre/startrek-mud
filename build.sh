@@ -60,7 +60,7 @@ echo "Starting Star Trek: Infinite Horizons on port 4242..."
 exec "$GAME_DIR/bin/ldmud" \
     --master "$GAME_DIR/lib/secure/master" \
     --mudlib "$GAME_DIR/lib" \
-    --log-file "$GAME_DIR/lib/log/driver.log" \
+    --logfile "$GAME_DIR/lib/log/driver.log" \
     --hard-malloc-limit 0 \
     4242
 STARTSCRIPT
