@@ -1,0 +1,21 @@
+## LDMud driver configuration for Star Trek: Infinite Horizons
+## Place this file in the mud root and point ldmud at it, or pass options directly
+
+name Star Trek: Infinite Horizons
+mud_lib /home/mud/game/lib
+master_file /secure/master
+simul_efun_file /secure/simul_efun
+log_file /log/driver.log
+
+## Ports
+port 4242
+
+## Memory
+hard_malloc_limit 0
+
+## Heartbeat
+heartbeat_interval 2
+
+## Swap
+swap_file /tmp/ldmud_swap
+swap_time 900
