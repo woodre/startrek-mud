@@ -1,70 +1,58 @@
 /* /secure/login.c
- * Login handler for Star Trek: Infinite Horizons
- * Handles new connections, login, and character creation
+ * Login handler - uses only native LDMud efuns
  */
 
 #include "/include/mudlib.h"
-#include "/include/races.h"
 
 string name;
 int new_player;
-int creation_stage;
-string race_choice;
-string class_choice;
+string pending_pass;
 
-// Called when object is connected to as a player
 void logon() {
-    write("\n");
-    write(C_CYAN + repeat_string("=", 70) + C_RESET + "\n");
-    string welcome = read_file(WELCOME_FILE);
-    if (welcome) write(welcome);
-    write(C_CYAN + repeat_string("=", 70) + C_RESET + "\n\n");
-    write(C_YELLOW + "By what name do you wish to be known? " + C_RESET);
+    write(read_file(WELCOME_FILE) || "Welcome!\n");
+    write("By what name do you wish to be known? ");
     input_to("get_name");
 }
 
-// Receive the player's name
 void get_name(string str) {
     if (!str || !sizeof(str)) {
-        write(C_RED + "Please enter a name.\n" + C_RESET);
+        write("Please enter a name.\n");
         write("By what name do you wish to be known? ");
         input_to("get_name");
         return;
     }
     str = lower_case(str);
-    // Validate name: letters only, 3-12 chars
     if (sizeof(str) < 3 || sizeof(str) > 12) {
-        write(C_RED + "Name must be between 3 and 12 characters.\n" + C_RESET);
+        write("Name must be between 3 and 12 characters.\n");
         write("By what name do you wish to be known? ");
         input_to("get_name");
         return;
     }
+    // Letters only
     int i;
     for (i = 0; i < sizeof(str); i++) {
         int c = str[i];
-        if (!((c >= 'a' && c <= 'z'))) {
-            write(C_RED + "Name must contain only letters.\n" + C_RESET);
+        if (c < 'a' || c > 'z') {
+            write("Name must contain only letters.\n");
             write("By what name do you wish to be known? ");
             input_to("get_name");
             return;
         }
     }
-    name = cap_str(str);
-    // Check if player file exists
+    name = upper_case(str[0..0]) + str[1..];
     if (file_size(PLAYER_SAVE_DIR + lower_case(name) + ".o") > 0) {
         new_player = 0;
-        write("\nWelcome back, " + C_LGREEN + name + C_RESET + "!\n");
+        write("Welcome back, " + name + "!\n");
         write("Password: ");
         input_to("get_password", 1);
     } else {
         new_player = 1;
-        write("\nA new face aboard the station! Welcome, " + C_LGREEN + name + C_RESET + ".\n");
+        write("Welcome, " + name + "! This appears to be a new character.\n");
         write("Choose a password: ");
         input_to("get_new_password", 1);
     }
 }
 
-// Existing player - verify password
 void get_password(string pass) {
     if (!pass || !sizeof(pass)) {
         write("Password: ");
@@ -75,21 +63,31 @@ void get_password(string pass) {
     player->set_name(name);
     if (!player->load_player(pass)) {
         destruct(player);
-        write(C_RED + "\nIncorrect password. Try again.\n" + C_RESET);
+        write("Incorrect password.\n");
         write("Password: ");
         input_to("get_password", 1);
         return;
     }
-    // Successful login
     exec(player, this_object());
     player->setup_after_login();
     destruct(this_object());
 }
 
-// New player - set password
 void get_new_password(string pass) {
     if (!pass || sizeof(pass) < 5) {
-        write(C_RED + "Password must be at least 5 characters.\n" + C_RESET);
+        write("Password must be at least 5 characters.\n");
+        write("Choose a password: ");
+        input_to("get_new_password", 1);
+        return;
+    }
+    pending_pass = pass;
+    write("Confirm password: ");
+    input_to("confirm_new_password", 1);
+}
+
+void confirm_new_password(string pass) {
+    if (pass != pending_pass) {
+        write("Passwords do not match.\n");
         write("Choose a password: ");
         input_to("get_new_password", 1);
         return;
@@ -97,7 +95,6 @@ void get_new_password(string pass) {
     object player = clone_object(PLAYER_OB);
     player->set_name(name);
     player->set_password(crypt(pass, 0));
-    creation_stage = 1;
     exec(player, this_object());
     player->start_creation();
     destruct(this_object());
